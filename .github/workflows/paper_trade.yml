@@ -1,7 +1,7 @@
 name: paper-trade
 on:
   schedule:
-    - cron: "45 14 * * 1-5"   # 14:45 UTC = 15 min tras la apertura de NY en horario de verano (ajustar a "45 15" en noviembre)
+    - cron: "45 14 * * 1-5"   # 14:45 UTC = 16:45 Milán en horario de verano (ajustar a "45 15" en noviembre)
   workflow_dispatch:
 jobs:
   rebalance:
@@ -13,7 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.12" }
+        with:
+          python-version: "3.12"
       - run: pip install -r paper/requirements.txt
       - run: python paper_trade.py --strategy ${{ matrix.strategy }}
         working-directory: paper
@@ -28,4 +29,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       - uses: actions/upload-artifact@v4
         if: always()
-        with: { name: logs-${{ matrix.strategy }}, path: paper/logs/, if-no-files-found: ignore }
+        with:
+          name: logs-${{ matrix.strategy }}
+          path: paper/logs/
+          if-no-files-found: ignore
