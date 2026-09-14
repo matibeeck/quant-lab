@@ -39,6 +39,20 @@ data/             cache de precios (parquet, ignorado por git)
 
 Los proyectos 3-7 alimentan una app propia (Quant Lab): riesgo de cartera, alertas de régimen de volatilidad, estrategia en paper trading con avisos por Telegram, pricing de opciones y optimizador. Cada proyecto entrega un notebook interactivo (ipywidgets) y su módulo en `quantlab/`.
 
+## Paper trading (`paper/`)
+
+Tres variantes de momentum mensual sobre 8 ETFs, cada una en su propia cuenta paper de Alpaca,
+ejecutadas por GitHub Actions el primer día hábil de cada mes:
+
+| Nombre | Regla | Referencia |
+|---|---|---|
+| MOM6 | top 3 por retorno 6m, si > 0; resto efectivo | Faber (2007) |
+| VOLT | MOM6 con exposición escalada a 10% de vol anual | Moreira & Muir (2017) |
+| DUAL | top 3 por retorno 12m, si > retorno de T-bills (BIL) | Antonacci (2014) |
+
+`paper/backtest_check.py` reproduce las tres con datos de Yahoo desde 2007. Backtest y operación
+usan la misma función `target_weights`.
+
 ## Reglas
 
 - Primero construir a mano, luego comparar con librerías.

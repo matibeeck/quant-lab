@@ -1,22 +1,31 @@
 name: paper-trade
 on:
   schedule:
-    - cron: "45 14 * * 1-5"   # 14:45 UTC = 15 min tras la apertura de NY (10:45 ET en horario de verano, 09:45 en invierno -> ajustar en nov)
+    - cron: "45 14 * * 1-5"   # 14:45 UTC = 15 min tras la apertura de NY en horario de verano (ajustar a "45 15" en noviembre)
   workflow_dispatch:
 jobs:
   rebalance:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        strategy: [MOM6, VOLT, DUAL]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: "3.12" }
       - run: pip install -r paper/requirements.txt
-      - run: python paper_trade.py
+      - run: python paper_trade.py --strategy ${{ matrix.strategy }}
         working-directory: paper
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
           ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          ALPACA_API_KEY_VOLT: ${{ secrets.ALPACA_API_KEY_VOLT }}
+          ALPACA_SECRET_KEY_VOLT: ${{ secrets.ALPACA_SECRET_KEY_VOLT }}
+          ALPACA_API_KEY_DUAL: ${{ secrets.ALPACA_API_KEY_DUAL }}
+          ALPACA_SECRET_KEY_DUAL: ${{ secrets.ALPACA_SECRET_KEY_DUAL }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       - uses: actions/upload-artifact@v4
-        with: { name: logs, path: paper/logs/ }
+        if: always()
+        with: { name: logs-${{ matrix.strategy }}, path: paper/logs/, if-no-files-found: ignore }
