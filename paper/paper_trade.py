@@ -81,6 +81,11 @@ def plan_orders(trading_client, targets: pd.Series) -> list[dict]:
     current = {p.symbol: float(p.market_value) for p in trading_client.get_all_positions()}
     orders = []
     for sym in sorted(set(targets.index) | set(current)):
+        # Objetivo 0 -> cerrar la posición entera por cantidad (vender por notional
+        # puede pedir unas fracciones más de las que hay y Alpaca lo rechaza).
+        if float(targets.get(sym, 0.0)) == 0.0 and sym in current:
+            orders.append({"symbol": sym, "side": "sell", "notional": round(abs(current[sym]), 2), "close": True})
+            continue
         diff = equity * float(targets.get(sym, 0.0)) - current.get(sym, 0.0)
         if abs(diff) < max(25.0, 0.002 * equity):
             continue
@@ -94,6 +99,10 @@ def submit(trading_client, orders: list[dict]) -> list[dict]:
     from alpaca.trading.enums import OrderSide, TimeInForce
     out = []
     for o in orders:
+        if o.get("close"):
+            resp = trading_client.close_position(o["symbol"])
+            out.append({**o, "order_id": str(resp.id), "status": str(resp.status)})
+            continue
         req = MarketOrderRequest(symbol=o["symbol"], notional=o["notional"],
                                  side=OrderSide.BUY if o["side"] == "buy" else OrderSide.SELL,
                                  time_in_force=TimeInForce.DAY)
