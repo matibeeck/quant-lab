@@ -3,6 +3,11 @@ on:
   schedule:
     - cron: "45 14 * * 1-5"   # 14:45 UTC = 16:45 Milán en horario de verano (ajustar a "45 15" en noviembre)
   workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebalancear hoy aunque no sea el primer día hábil del mes"
+        type: boolean
+        default: false
 jobs:
   rebalance:
     runs-on: ubuntu-latest
@@ -16,7 +21,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -r paper/requirements.txt
-      - run: python paper_trade.py --strategy ${{ matrix.strategy }}
+      - run: python paper_trade.py --strategy ${{ matrix.strategy }} ${{ inputs.force && '--force' || '' }}
         working-directory: paper
         env:
           ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
